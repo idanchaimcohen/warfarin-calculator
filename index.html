@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warfarin Dosage Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .warning {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-left: 4px solid #c62828;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0b7dda;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            display: none;
+        }
+        #contraindications {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #ffebee;
+            border-left: 4px solid #c62828;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Warfarin Dosage Calculator</h1>
+        
+        <div class="warning">
+            <strong>Important:</strong> This calculator is a guidance tool only. Always use clinical judgment and follow your institution's protocols. Refer to the most recent guidelines from the American College of Chest Physicians (ACCP).
+        </div>
+        
+        <form id="warfarinForm">
+            <div class="form-group">
+                <label for="day">Day of Warfarin Treatment:</label>
+                <select id="day" required>
+                    <option value="">Select day</option>
+                    <option value="1">Day 1-2 (Initial)</option>
+                    <option value="3">Day 3</option>
+                    <option value="4">Day 4</option>
+                    <option value="5">Day 5</option>
+                    <option value="6">Day 6</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="patientType">Patient Type:</label>
+                <select id="patientType" required>
+                    <option value="">Select patient type</option>
+                    <option value="normal">Normal Adult</option>
+                    <option value="highrisk">Frail, Elderly, Malnourished or Liver Disease</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="inr">Current INR:</label>
+                <input type="number" id="inr" step="0.1" min="0" max="10" required placeholder="e.g., 1.8">
+            </div>
+            
+            <div class="form-group">
+                <label for="indication">Primary Indication:</label>
+                <select id="indication" required>
+                    <option value="">Select indication</option>
+                    <option value="vte">Venous Thromboembolism</option>
+                    <option value="af">Non-valvular Atrial Fibrillation</option>
+                    <option value="valveAortic">Mechanical Heart Valve (Aortic Position)</option>
+                    <option value="valveMitral">Mechanical Heart Valve (Mitral Position)</option>
+                    <option value="ball">Caged Ball or Caged Disk Valve</option>
+                    <option value="bio">Bioprosthetic Mitral Valve</option>
+                    <option value="mi">Post-Myocardial Infarction</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Contraindication Check:</label>
+                <div>
+                    <input type="checkbox" id="bleeding" name="contraindication">
+                    <label for="bleeding">Active bleeding or significant hemorrhage risk</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="surgery" name="contraindication">
+                    <label for="surgery">Recent/upcoming surgery with bleeding risk</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="pregnancy" name="contraindication">
+                    <label for="pregnancy">Pregnancy (except mechanical heart valve)</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="hypertension" name="contraindication">
+                    <label for="hypertension">Malignant hypertension</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="hypersensitivity" name="contraindication">
+                    <label for="hypersensitivity">Hypersensitivity to warfarin</label>
+                </div>
+            </div>
+            
+            <button type="button" onclick="calculateDose()">Calculate Dose</button>
+        </form>
+        
+        <div id="result"></div>
+        <div id="contraindications"></div>
+    </div>
+
+    <script>
+        function calculateDose() {
+            // Check for contraindications first
+            const contraindications = document.querySelectorAll('input[name="contraindication"]:checked');
+            if (contraindications.length > 0) {
+                let contraindicationText = "<h3>⚠️ Warfarin Contraindicated</h3><p>The following contraindications were identified:</p><ul>";
+                contraindications.forEach(item => {
+                    contraindicationText += `<li>${item.nextElementSibling.textContent}</li>`;
+                });
+                contraindicationText += "</ul><p>Consider alternative anticoagulation therapy or consult with physician.</p>";
+                
+                document.getElementById('contraindications').innerHTML = contraindicationText;
+                document.getElementById('contraindications').style.display = "block";
+                document.getElementById('result').style.display = "none";
+                return;
+            } else {
+                document.getElementById('contraindications').style.display = "none";
+            }
+            
+            // Get form values
+            const day = document.getElementById('day').value;
+            const patientType = document.getElementById('patientType').value;
+            const inr = parseFloat(document.getElementById('inr').value);
+            const indication = document.getElementById('indication').value;
+            
+            // Validate inputs
+            if (!day || !patientType || isNaN(inr) || !indication) {
+                alert("Please fill in all required fields");
+                return;
+            }
+
+            let dose = "";
+            let targetINR = "";
+            
+            // Determine target INR based on indication
+            switch(indication) {
+                case 'vte':
+                case 'af':
+                case 'valveAortic':
+                case 'bio':
+                case 'mi':
+                    targetINR = "2.0-3.0 (target 2.5)";
+                    break;
+                case 'valveMitral':
+                case 'ball':
+                    targetINR = "2.5-3.5 (target 3.0)";
+                    break;
+            }
+            
+            // Calculate initial dose (days 1-2)
+            if (day === "1") {
+                if (patientType === "normal") {
+                    dose = "5 mg daily";
+                } else {
+                    dose = "2.5 mg daily";
+                }
+            } 
+            // Calculate doses for days 3-6
+            else {
+                if (inr < 1.5) {
+                    switch(day) {
+                        case "3": dose = "5 to 10 mg"; break;
+                        case "4": dose = "10 mg"; break;
+                        case "5": dose = "10 mg"; break;
+                        case "6": dose = "7.5 to 12.5 mg"; break;
+                    }
+                } else if (inr >= 1.5 && inr < 2.0) {
+                    switch(day) {
+                        case "3": dose = "2.5 to 5 mg"; break;
+                        case "4": dose = "5 to 7.5 mg"; break;
+                        case "5": dose = "7.5 to 10 mg"; break;
+                        case "6": dose = "5 to 10 mg"; break;
+                    }
+                } else if (inr >= 2.0 && inr <= 3.0) {
+                    switch(day) {
+                        case "3": dose = "0 to 2.5 mg"; break;
+                        case "4": dose = "0 to 5 mg"; break;
+                        case "5": dose = "0 to 5 mg"; break;
+                        case "6": dose = "0 to 7.5 mg"; break;
+                    }
+                } else if (inr > 3.0) {
+                    dose = "No dose (hold warfarin)";
+                }
+            }
+            
+            // Display the result
+            let resultHTML = `
+                <h3>Warfarin Dosage Recommendation</h3>
+                <p><strong>Recommended dose:</strong> ${dose}</p>
+                <p><strong>Target INR range:</strong> ${targetINR}</p>
+                <p><strong>Current INR:</strong> ${inr}</p>
+                <p><strong>Notes:</strong></p>
+                <ul>
+                    <li>Monitor INR daily for hospitalized patients or those starting therapy</li>
+                    <li>Once stabilized, monitor INR every 4 weeks</li>
+                    <li>Adjust dosage based on the individual patient's response</li>
+                    <li>Consider drug interactions, diet changes, and other factors affecting INR</li>
+                </ul>
+                <p><em>This is a guidance tool only. Final dosing decisions should be made by the prescribing clinician.</em></p>
+            `;
+            
+            document.getElementById('result').innerHTML = resultHTML;
+            document.getElementById('result').style.display = "block";
+        }
+    </script>
+</body>
+</html>
